@@ -105,21 +105,30 @@ function identifyResolution(filePath) {
 }
 
 
-function convertAndResize(filePath, destination, resolution='1920x1080', gaussianBlur='0.05', quality='85') {
+function convertAndResize(
+  filePath,
+  destination,
+  resolution='1920x1080',
+  quality='85'
+) {
   return new Promise(async (resolve, reject) => {
-
-    const fileResolution = await identifyResolution(filePath)
-
-    const [fileWidth, fileHeight] = fileResolution.outData.split('|')[0].split('x')
     const [width, height] = resolution.split('x')
 
-    if (parseInt(fileHeight) > parseInt(fileWidth)) {
-      resolution = `${height}x${width}`
-    } else if (parseInt(fileHeight) === parseInt(fileWidth)) {
-      resolution = `${height}x${height}`
+    if (height) {
+      const fileResolution = await identifyResolution(filePath)
+
+      const [fileWidth, fileHeight] = fileResolution.outData.split('|')[0].split('x')
+      
+      if (parseInt(fileHeight) > parseInt(fileWidth)) {
+        resolution = `${height}x${width}`
+      } else if (parseInt(fileHeight) === parseInt(fileWidth)) {
+        resolution = `${height}x${height}`
+      }   
     }
 
     const convert = spawn('convert', [
+      `-resize`,
+      `${resolution}\>`,
       `-strip`,
       `-interlace`,
       `Plane`,
@@ -156,10 +165,18 @@ function convertAndResize(filePath, destination, resolution='1920x1080', gaussia
   })
 }
 
+console.time('convert')
+convertAndResize('./samples/c.jpg', './samples/c_converted.jpg')
+  .then(r => {
+    console.timeEnd('convert')
+    console.log(r)
+  })
+  .catch(e => console.log(e))
 
-convertAndResize('./samples/b.jpg', './samples/b_reduced.jpg')
-    .then(r => console.log(r))
-    .catch(e => console.log(e))
+
+// convertAndResize('./samples/b.jpg', './samples/b_reduced.jpg')
+//     .then(r => console.log(r))
+//     .catch(e => console.log(e))
 
 function convert(filePath, destination) {
   return new Promise(async (resolve, reject) => {
